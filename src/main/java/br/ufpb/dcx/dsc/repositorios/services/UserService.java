@@ -4,6 +4,9 @@ import br.ufpb.dcx.dsc.repositorios.models.Photo;
 import br.ufpb.dcx.dsc.repositorios.models.User;
 import br.ufpb.dcx.dsc.repositorios.repository.PhotoRepository;
 import br.ufpb.dcx.dsc.repositorios.repository.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -13,17 +16,23 @@ import java.util.Optional;
 @Service
 
 public class UserService {
+
     private UserRepository userRepository;
+
     private PhotoRepository photoRepository;
 
-    public UserService( UserRepository userRepository, PhotoRepository photoRepository){
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService( UserRepository userRepository, PhotoRepository photoRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.photoRepository = photoRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<User> listUsers() {
         return userRepository.findAll();
     }
+
     public User getUser(Long userId) {
 
         if(userId != null)
@@ -31,11 +40,11 @@ public class UserService {
         return null;
     }
 
-    public User createUser(User user){
-
+    public User createUser(User user) {
         Photo photo = new Photo("www.exemplo.com/foto.png");
         photoRepository.save(photo);
         user.setPhoto(photo);
+        user.setSenha(passwordEncoder.encode(user.getSenha()));
         return userRepository.save(user);
     }
 
@@ -48,6 +57,21 @@ public class UserService {
             return userRepository.save(user);
         }
         return null;
+    }
+
+    public User updateSenha(String nome, String oldPassword, String newPassword) {
+        User user = userRepository.findByNome(nome);
+        if(user == null){
+            return null;
+        }
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            return null;
+        }
+
+        user.setSenha(passwordEncoder.encode(newPassword));
+
+        return userRepository.save(user);
     }
 
     public void deleteUser(Long userId) {

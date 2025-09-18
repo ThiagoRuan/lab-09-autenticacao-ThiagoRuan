@@ -1,10 +1,13 @@
 package br.ufpb.dcx.dsc.repositorios.controller;
 
+import br.ufpb.dcx.dsc.repositorios.dto.PasswordChangeDTO;
 import br.ufpb.dcx.dsc.repositorios.dto.UserDTO;
 import br.ufpb.dcx.dsc.repositorios.models.User;
 import br.ufpb.dcx.dsc.repositorios.services.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,6 +59,12 @@ public class UserController {
     @DeleteMapping("/user/{userId}")
     public void deleteUser(@PathVariable Long userId){
         userService.deleteUser(userId);
+    }
+
+    @PutMapping("/user/change-pass")
+    public ResponseEntity<UserDTO> mudarSenha(@Valid @RequestBody PasswordChangeDTO passwordChangeDTO){
+        User user = userService.updateSenha(passwordChangeDTO.getNome(),passwordChangeDTO.getOldPassword(), passwordChangeDTO.getNewPassword());
+        return user == null ? ResponseEntity.status(HttpStatus.NOT_FOUND).body(new UserDTO()) : ResponseEntity.ok(convertToDTO(user));
     }
 
 /*    @GetMapping("/board/{boardId}/user/{userId}/share")
